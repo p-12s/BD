@@ -82,6 +82,26 @@ GROUP BY SellingId
 HAVING Sum(ProductId) BETWEEN 1.0 AND 3.0
 ORDER BY SellingId
 
+-- rename NULL cell
+SELECT 
+  ProducrId, Name, ISNULL(Manufacture, 'N/A') AS Manuf
+FROM
+  [goods_sellers_sales].[dbo].[Product]
+
+-- LIKE
+SELECT ProducrId, Name, ISNULL(Manufacture, 'N/A') AS Manuf
+FROM [goods_sellers_sales].[dbo].[Product]
+WHERE Name NOT LIKE 'М%'
+
+-- CONVERT
+SELECT contactID, fn, sn, Email 
+FROM [Sample].[dbo].[tblContacts]
+WHERE contactID BETWEEN 105 AND 110
+ORDER BY CONVERT(varchar(255), Email)
+
+
+
+
 
 
 
