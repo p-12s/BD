@@ -99,20 +99,42 @@ FROM [Sample].[dbo].[tblContacts]
 WHERE contactID BETWEEN 105 AND 110
 ORDER BY CONVERT(varchar(255), Email)
 
+-- 4.1 JOINS
+
+-- LEFT JOIN двух таблиц + WHERE по 1 атрибуту
+-- найти все номера продаж, в которых были проданы Бананы
+SELECT *
+FROM ProductInSelling
+LEFT JOIN Product ON ProductInSelling.ProductId = Product.ProductId
+WHERE Product.Name LIKE 'Банан%'
 
 
+-- RIGHT JOIN двух таблиц, получить те же записи как в 4.1.
+SELECT *
+FROM Product
+RIGHT JOIN ProductInSelling ON Product.ProductId = ProductInSelling.ProductId
+WHERE Product.Name LIKE 'Банан%'
 
+-- LEFT JOIN двух таблиц + WHERE по 2 атрибутам из 1 таблицы
+-- получить продукты, которые были в продаже №1, кроме продукта под №1
+SELECT *
+FROM ProductInSelling
+LEFT JOIN Product ON ProductInSelling.ProductId = Product.ProductId
+WHERE ProductInSelling.SellingId = 1 AND ProductInSelling.ProductId != 1
 
+-- LEFT JOIN двух таблиц + WHERE по 1 атрибуту из каждой таблицы
+-- найти номера продаж, совершенных 2018-01-01, и имена покупателей должны содержать буквы "ри"
+SELECT *
+FROM Selling
+LEFT JOIN Seller ON Selling.SellerId = Seller.SellerId
+WHERE Selling.Date = '2018-01-01' AND Seller.Name LIKE '%ри%'
 
-
-
-
-
-
-
-
-
-
-
-
-
+-- LEFT JOIN трех таблиц + WHERE по 1 атрибуту из каждой таблицы
+-- Найти номера продаж (кроме №1), 
+--   которые были совершены 2018-01-01, 
+--   и имена покупателей должны содержать буквы "ри"
+SELECT *
+FROM ProductInSelling
+LEFT JOIN Selling ON ProductInSelling.SellingId = Selling.SellingId
+LEFT JOIN Seller ON Selling.SellerId = Seller.SellerId
+WHERE ProductInSelling.SellingId != 1 AND Selling.Date = '2018-01-01' AND Seller.Name LIKE '%ри%'
