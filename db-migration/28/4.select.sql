@@ -1,40 +1,37 @@
 -- 1. С определенным набором извлекаемых атрибутов (SELECT atr1, atr2 FROM...)
-
 SELECT Name, Price 
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 
 -- 2. Со всеми атрибутами (SELECT * FROM...)
-
 SELECT * 
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 
 -- 3. С условием по атрибуту (SELECT * FROM ... WHERE atr1 = "")
-
 SELECT * 
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 WHERE Name = 'Слива'
 
 -- 4.a - ASC
 SELECT *
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 ORDER BY Name
 ASC
 
 -- 4.b - DESC
 SELECT *
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 ORDER BY Name
 DESC
 
 -- 4.c - по двум атрибутам
 SELECT *
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 ORDER BY ProductId, Count
 ASC
 
 -- 4.d - по первому атрибуту, из списка извлекаемых
 SELECT *
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 ORDER BY 1
 ASC
 
@@ -44,40 +41,36 @@ ASC
 -- b. 4.2 MAX 
 -- c. 4.3 AVG
 -- d. 4.4 SUM
-SELECT * FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+SELECT * FROM ProductInSelling
 SELECT 
   SellingId, 
   MIN(Count) AS MinCountForSellingId, 
   MAX(Count) AS MaxCountForSellingId,
   AVG(Count) AS AvgCountForSellingId,
   Sum(Count) AS SumCountForSellingId
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 GROUP BY SellingId    
-
 
 -- 3. GROUP BY + текстовое объяснение извлекаемых данных
 -- a. функция агрегации GROUP BY
-SELECT * FROM [goods_sellers_sales].[dbo].[ProductInSelling]
-
+SELECT * FROM ProductInSelling
 SELECT 
   SellingId, 
   COUNT(ProductId) AS ProductCountInSelling
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 GROUP BY SellingId 
 
 -- b. функция агрегации GROUP BY HAVING                              
-SELECT * FROM [goods_sellers_sales].[dbo].[ProductInSelling]
-
+SELECT * FROM ProductInSelling
 SELECT 
   SellingId, 
   Sum(ProductID) AS Sum
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 GROUP BY SellingId
-
 SELECT 
   SellingId, 
   Sum(ProductID) AS Sum
-FROM [goods_sellers_sales].[dbo].[ProductInSelling]
+FROM ProductInSelling
 GROUP BY SellingId
 HAVING Sum(ProductId) BETWEEN 1.0 AND 3.0
 ORDER BY SellingId
@@ -86,16 +79,16 @@ ORDER BY SellingId
 SELECT 
   ProducrId, Name, ISNULL(Manufacture, 'N/A') AS Manuf
 FROM
-  [goods_sellers_sales].[dbo].[Product]
+  Product
 
 -- LIKE
 SELECT ProducrId, Name, ISNULL(Manufacture, 'N/A') AS Manuf
-FROM [goods_sellers_sales].[dbo].[Product]
+FROM Product
 WHERE Name NOT LIKE 'М%'
 
 -- CONVERT
 SELECT contactID, fn, sn, Email 
-FROM [Sample].[dbo].[tblContacts]
+FROM tblContacts
 WHERE contactID BETWEEN 105 AND 110
 ORDER BY CONVERT(varchar(255), Email)
 
@@ -138,3 +131,41 @@ FROM ProductInSelling
 LEFT JOIN Selling ON ProductInSelling.SellingId = Selling.SellingId
 LEFT JOIN Seller ON Selling.SellerId = Seller.SellerId
 WHERE ProductInSelling.SellingId != 1 AND Selling.Date = '2018-01-01' AND Seller.Name LIKE '%ри%'
+
+-- SUBSTRING + CHARINDEX
+SELECT 
+  LEFT(Url, 15) AS URL, 
+  SUBSTRING(Url, 1, CHARINDEX('.', Url) - 1 ) AS UrlIndex,
+  * 
+FROM Host
+
+-- DATEPART
+SELECT
+  DATEPART(ss, CreationDate) AS Seconds,
+  DATEPART(mm, CreationDate) AS Minutes,
+  DATEPART(hh, CreationDate) AS Hour,
+  DAY(CreationDate) AS Day,
+  MONTH(CreationDate) AS Month,
+  YEAR(CreationDate) AS Year,  
+  *
+FROM Host
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
