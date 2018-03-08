@@ -3,16 +3,15 @@
 
 
 
--------------- create table Product --------------
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Product' AND xtype='U')
-  CREATE TABLE [goods_sellers_sales].[dbo].[Product](
-    [ProductId] [int] IDENTITY(1,1) NOT NULL,
+-------------- create table PharmacologicalCompany --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Company' AND xtype='U')
+  CREATE TABLE PharmacologicalCompany(
+    [PharmacologicalCompanyId] [int] IDENTITY(1, 1) NOT NULL,
     [Name] [nvarchar](255) NOT NULL,
-    [Manufacture] [nvarchar](255) NOT NULL,
-    [Price] [float] NOT NULL,
-    CONSTRAINT [PK_Product] PRIMARY KEY CLUSTERED 
+    [YearOfFoundation] [year] NOT NULL,
+    CONSTRAINT [PK_PharmacologicalCompany] PRIMARY KEY CLUSTERED 
     (
-      [ProductId] ASC
+      [PharmacologicalCompanyId] ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
@@ -20,10 +19,10 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Product' AND xtype='U')
   ON [PRIMARY]
 GO
 
--------------- create table Seller --------------
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Seller' AND xtype='U')
-  CREATE TABLE [goods_sellers_sales].[dbo].[Seller](
-    [SellerId] [int] IDENTITY(1,1) NOT NULL,
+-------------- create table Dealer --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Dealer' AND xtype='U')
+  CREATE TABLE Dealer(
+    [DealerId] [int] IDENTITY(1, 1) NOT NULL,
     [Name] [nvarchar](255) NOT NULL,
     [Surname] [nvarchar](255) NOT NULL,
     CONSTRAINT [PK_dbo.Seller] PRIMARY KEY CLUSTERED 
