@@ -65,7 +65,41 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Production' AND xtype='U')
   ON [PRIMARY]
 GO
 
+IF OBJECT_ID('FK_MedicineProduction') IS NULL
+  ALTER TABLE [Production]
+    WITH CHECK
+    ADD CONSTRAINT FK_MedicineProduction
+    FOREIGN KEY (MedicineId) REFERENCES Medicine(MedicineId)
+    ON DELETE CASCADE
+  GO
 
+  ALTER TABLE [Production] 
+    CHECK CONSTRAINT FK_MedicineProduction
+  GO  
+
+IF OBJECT_ID('FK_CompanyProduction') IS NULL
+  ALTER TABLE [Production]
+    WITH CHECK
+    ADD CONSTRAINT FK_CompanyProduction
+    FOREIGN KEY (CompanyId) REFERENCES Company(CompanyId)
+    ON DELETE CASCADE
+  GO
+
+  ALTER TABLE [Production] 
+    CHECK CONSTRAINT FK_CompanyProduction
+  GO
+
+IF OBJECT_ID('FK_DealerProduction') IS NULL
+  ALTER TABLE [Production]
+    WITH CHECK
+    ADD CONSTRAINT FK_DealerProduction
+    FOREIGN KEY (DealerId) REFERENCES Dealer(DealerId)
+    ON DELETE CASCADE
+  GO
+
+  ALTER TABLE [Production] 
+    CHECK CONSTRAINT FK_DealerProduction
+  GO
 -------------- create table Drugstore --------------
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Drugstore' AND xtype='U')
   CREATE TABLE [Drugstore](
