@@ -192,7 +192,12 @@ SELECT *
 FROM Host
 CROSS JOIN CheckInterval
 
-
+-- Getting the Date:
+getDate()
+date()
+currentDate()
+curDate()
+sysdate
 
 
 

@@ -1,17 +1,12 @@
--- создать БД, если не существует
-
-
-
-
--------------- create table PharmacologicalCompany --------------
+-------------- create table Company --------------
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Company' AND xtype='U')
-  CREATE TABLE PharmacologicalCompany(
-    [PharmacologicalCompanyId] [int] IDENTITY(1, 1) NOT NULL,
-    [Name] [nvarchar](255) NOT NULL,
-    [YearOfFoundation] [year] NOT NULL,
-    CONSTRAINT [PK_PharmacologicalCompany] PRIMARY KEY CLUSTERED 
+  CREATE TABLE [Company](
+    [CompanyId] [int] IDENTITY(1, 1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [YearOfFoundation] [int] NOT NULL,
+    CONSTRAINT [PK_Company] PRIMARY KEY CLUSTERED 
     (
-      [PharmacologicalCompanyId] ASC
+      [CompanyId] ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
@@ -21,13 +16,13 @@ GO
 
 -------------- create table Dealer --------------
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Dealer' AND xtype='U')
-  CREATE TABLE Dealer(
+  CREATE TABLE [Dealer](
     [DealerId] [int] IDENTITY(1, 1) NOT NULL,
-    [Name] [nvarchar](255) NOT NULL,
-    [Surname] [nvarchar](255) NOT NULL,
-    CONSTRAINT [PK_dbo.Seller] PRIMARY KEY CLUSTERED 
+    [Surname] [nvarchar](100) NOT NULL,
+    [Phone] [nvarchar](100) NOT NULL,
+    CONSTRAINT [PK_dbo.Dealer] PRIMARY KEY CLUSTERED 
     (
-      [SellerId] ASC
+      [DealerId] ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
@@ -35,45 +30,34 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Dealer' AND xtype='U')
   ON [PRIMARY]
 GO
 
--------------- create table Selling --------------
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Selling' AND xtype='U')
-  CREATE TABLE [goods_sellers_sales].[dbo].[Selling](
-    [SellingId] [int] IDENTITY(1,1) NOT NULL,
-    [SellerId] [int] NOT NULL,
-    [Date] [datetime] NOT NULL,
-    CONSTRAINT [PK_dbo.Selling] PRIMARY KEY CLUSTERED 
+-------------- create table Medicine --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Medicine' AND xtype='U')
+  CREATE TABLE [Medicine](
+    [MedicineId] [int] IDENTITY(1, 1) NOT NULL,
+    [Name] [nvarchar](100) NOT NULL,
+    [DurationOfTreatment] [int] NOT NULL,
+    CONSTRAINT [PK_dbo.Medicine] PRIMARY KEY CLUSTERED 
     (
-      [SellingId] ASC
+      [MedicineId] ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
   ) 
   ON [PRIMARY]
-GO
+GO          
 
-IF OBJECT_ID('[goods_sellers_sales].[dbo].[FK_dbo.Selling_dbo.Seller_SellerId]') IS NULL
-  ALTER TABLE [goods_sellers_sales].[dbo].[Selling]  
-    WITH CHECK 
-    ADD CONSTRAINT [FK_dbo.Selling_dbo.Seller_SellerId] 
-    FOREIGN KEY([SellerId])
-    REFERENCES [goods_sellers_sales].[dbo].[Seller] ([SellerId])
-    ON DELETE CASCADE
-  GO
-
-  ALTER TABLE [dbo].[Selling] 
-    CHECK CONSTRAINT [FK_dbo.Selling_dbo.Seller_SellerId]
-  GO  
-
--------------- create table ProductInSelling --------------
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductInSelling' AND xtype='U')
-  CREATE TABLE [goods_sellers_sales].[dbo].[ProductInSelling](
-    [ProductInSellingId] [int] IDENTITY(1,1) NOT NULL,
-    [SellingId] [int] NOT NULL,
-    [ProductId] [int] NOT NULL,
-    [Count] [float] NOT NULL,
-    CONSTRAINT [PK_dbo.ProductInSelling] PRIMARY KEY CLUSTERED 
+-------------- create table Production --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Production' AND xtype='U')
+  CREATE TABLE [Production](
+    [ProductionId] [int] IDENTITY(1, 1) NOT NULL,
+    [CompanyId] [int] NOT NULL,
+    [MedicineId] [int] NOT NULL,
+    [Price] [money] NOT NULL,
+    [QualityControl] [int] NOT NULL,
+    [DealerId] [int] NOT NULL,
+    CONSTRAINT [PK_dbo.Production] PRIMARY KEY CLUSTERED 
     (
-      [ProductInSellingId] ASC
+      [ProductionId] ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
@@ -81,28 +65,49 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductInSelling' AND xtype=
   ON [PRIMARY]
 GO
 
-IF OBJECT_ID('[goods_sellers_sales].[dbo].[FK_dbo.ProductInSelling_dbo.Selling_SellingId]') IS NULL
-  ALTER TABLE [goods_sellers_sales].[dbo].[ProductInSelling]  
-    WITH CHECK 
-    ADD CONSTRAINT [FK_dbo.ProductInSelling_dbo.Selling_SellingId] 
-    FOREIGN KEY([SellingId])
-    REFERENCES [goods_sellers_sales].[dbo].[Selling] ([SellingId])
+
+-------------- create table Drugstore --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Drugstore' AND xtype='U')
+  CREATE TABLE [Drugstore](
+    DrugstoreId int IDENTITY(1, 1) NOT NULL,
+    Name nvarchar (100) NOT NULL,
+    Address nvarchar (255) NOT NULL,
+    CONSTRAINT PK_Drugstore PRIMARY KEY CLUSTERED 
+    (
+      DrugstoreId ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
+    ON [PRIMARY]
+  )
+  ON [PRIMARY]
+GO
+
+-------------- create table Order --------------
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Order' AND xtype='U')
+  CREATE TABLE [Order](
+    OrderId int IDENTITY(1, 1) NOT NULL,
+    DrugstoreId int NOT NULL,
+    ProductionId int NOT NULL,
+    OrderDate date NOT NULL,     
+    QualityMedicineInOrder int NOT NULL,
+    CONSTRAINT PK_Order PRIMARY KEY CLUSTERED 
+    (
+      OrderId ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
+    ON [PRIMARY]
+  )
+  ON [PRIMARY]
+GO
+
+IF OBJECT_ID('FK_DrugstoreOrder') IS NULL
+  ALTER TABLE [Order]
+    WITH CHECK
+    ADD CONSTRAINT FK_DrugstoreOrder
+    FOREIGN KEY (DrugstoreId) REFERENCES Drugstore(DrugstoreId)
     ON DELETE CASCADE
+  GO
+
+  ALTER TABLE [Order] 
+    CHECK CONSTRAINT FK_DrugstoreOrder
   GO  
-
-  ALTER TABLE [dbo].[ProductInSelling] 
-    CHECK CONSTRAINT [FK_dbo.ProductInSelling_dbo.Selling_SellingId]
-  GO
-
-IF OBJECT_ID('[goods_sellers_sales].[dbo].[FK_dbo.ProductInSelling_dbo.Product_ProductId]') IS NULL
-  ALTER TABLE [goods_sellers_sales].[dbo].[ProductInSelling]  
-    WITH CHECK 
-    ADD CONSTRAINT [FK_dbo.ProductInSelling_dbo.Product_ProductId] 
-    FOREIGN KEY([ProductId])
-    REFERENCES [goods_sellers_sales].[dbo].[Product] ([ProductId])
-    ON DELETE CASCADE
-  GO 
-
-  ALTER TABLE [dbo].[ProductInSelling] 
-    CHECK CONSTRAINT [FK_dbo.ProductInSelling_dbo.Product_ProductId]
-  GO
