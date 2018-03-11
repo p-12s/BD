@@ -9,6 +9,23 @@ INNER JOIN sys.foreign_key_columns AS fc
    ON f.OBJECT_ID = fc.constraint_object_id
 
 -- 2) Выдать информацию по всем заказам лекарства “Кордерон” компании “Аргус” с указанием названий аптек, дат, объема заказов.
+SELECT 
+  Medicine.Name AS 'Drug', 
+  Company.Name AS 'Company name',
+  Drugstore.Name AS 'Drugstore name',
+  Drugstore.Address AS 'Drugstore address',
+  [Order].OrderDate AS 'Date ordering',
+  [Order].QuantityMedicineInOrder AS 'Order quantity'
+FROM Production
+INNER JOIN Medicine 
+  ON Production.MedicineId = Medicine.MedicineId
+INNER JOIN Company
+  ON Production.CompanyId = Company.CompanyId
+INNER JOIN [Order]
+  ON Production.ProductionId = [Order].ProductionId
+INNER JOIN Drugstore
+  ON [Order].DrugstoreId = Drugstore.DrugstoreId
+WHERE (Company.Name LIKE '%Аргус%') AND (Medicine.Name LIKE '%Кордерон%')
 
 -- 3) Дать список лекарств компании “Фарма”, на которые не были сделаны заказы до 1.05.12.
 

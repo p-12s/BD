@@ -123,7 +123,7 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Order' AND xtype='U')
     DrugstoreId int NOT NULL,
     ProductionId int NOT NULL,
     OrderDate date NOT NULL,     
-    QualityMedicineInOrder int NOT NULL,
+    QuantityMedicineInOrder int NOT NULL,
     CONSTRAINT PK_Order PRIMARY KEY CLUSTERED 
     (
       OrderId ASC
@@ -144,4 +144,16 @@ IF OBJECT_ID('FK_DrugstoreOrder') IS NULL
 
   ALTER TABLE [Order] 
     CHECK CONSTRAINT FK_DrugstoreOrder
+  GO  
+
+IF OBJECT_ID('FK_ProductionOrder') IS NULL
+  ALTER TABLE [Order]
+    WITH CHECK
+    ADD CONSTRAINT FK_ProductionOrder
+    FOREIGN KEY (ProductionId) REFERENCES Production(ProductionId)
+    ON DELETE CASCADE
+  GO
+
+  ALTER TABLE [Order] 
+    CHECK CONSTRAINT FK_ProductionOrder
   GO  
