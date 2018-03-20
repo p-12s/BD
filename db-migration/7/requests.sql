@@ -47,193 +47,42 @@ LEFT JOIN [Order]
   ON Production.ProductionId = [Order].ProductionId
 WHERE ([Order].ProductionId IS NULL)
 
--- 4) Дать минимальный и максимальный баллы по лекарствам каждой фирмы, 
--- которая производит не менее 10 препаратов, 
--- с указанием названий фирмы и лекарства.
+-- 4) Дать минимальный и максимальный баллы по лекарствам каждой фирмы, которая производит не менее 10 препаратов, с указанием названий фирмы и лекарства
 
-SELECT
-  N.Name,
-  M.MedicineCount,
-  M.MinQuality,
-  M.Name AS NameMin,
-  M.MinQPrice,
-  M.MaxQuality,
-  M.NameMax,
-  M.MaxQPrice
-FROM
-  (
+SELECT P.CompanyId, C.Name, MIN(P.QualityControl) AS MinQ, MAX(P.QualityControl) AS MaxQ
+FROM Production AS P
+LEFT JOIN Company AS C ON P.CompanyId = C.CompanyId
+GROUP BY P.CompanyId, C.Name
+HAVING COUNT(*) > 10
+
+-- 5) Дать списки сделавших заказы аптек по всем дилерам компании “Годеон Рихтер”. Если у дилера нет заказов, в названии аптеки проставить NULL.
+                                                         
+SELECT PP.DealerId, O.DrugstoreId, D.Name FROM 
+(SELECT P.ProductionId, P.DealerId FROM Production AS P WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%������ ������%')) AS PP
+LEFT JOIN Orders AS O ON PP.productionId = O.ProductionId
+INNER JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
+
+-- 6) Уменьшить на 20% стоимость всех лекарств, если она превышает 3000, а длительность лечения не более 7 дней.
+UPDATE
+  Production
+SET
+  Price = Price * 0.8
+WHERE
+  ProductionId IN (
     SELECT
-      K.CompanyId,
-      K.MedicineCount,
-      K.MinQuality,
-      K.Name,
-      K.Price AS MinQPrice,
-      K.MaxQuality,
-      L.Name AS NameMax,
-      K.MaxQPrice
+      PP.ProductionId
     FROM
       (
         SELECT
-          I.CompanyId,
-          I.MedicineCount,
-          I.MinQuality,
-          I.Name,
-          I.Price,
-          I.MaxQuality,
-          J.MedicineId AS MaxQMedId,
-          J.Price AS MaxQPrice
+          M.MedicineId,
+          P.Price
         FROM
-          (
-            SELECT
-              G.CompanyId,
-              G.MedicineCount,
-              G.MinQuality,
-              G.Name,
-              G.Price,
-              H.MaxQuality
-            FROM
-              (
-                SELECT
-                  F.CompanyId,
-                  F.MedicineCount,
-                  F.MinQuality,
-                  M.Name,
-                  F.Price
-                FROM
-                  (
-                    SELECT
-                      E.CompanyId,
-                      E.MedicineCount,
-                      E.MinQuality,
-                      P.MedicineId,
-                      P.Price
-                    FROM
-                      (
-                        SELECT
-                          D.CompanyId,
-                          D.MedicineCount,
-                          C.MinQuality
-                        FROM
-                          (
-                            SELECT
-                              *
-                            FROM
-                              (
-                                (
-                                  SELECT
-                                    CompanyId,
-                                    COUNT(MedicineId) AS 'MedicineCount'
-                                  FROM
-                                    Production AS A
-                                  GROUP BY
-                                    A.CompanyId
-                                )
-                              ) AS B
-                            WHERE
-                              B.MedicineCount >= 10
-                          ) AS D
-                          LEFT JOIN (
-                            SELECT
-                              CompanyId,
-                              MIN(QualityControl) AS MinQuality
-                            FROM
-                              Production AS MinQ
-                            GROUP BY
-                              CompanyId
-                          ) AS C ON D.CompanyId = C.CompanyId
-                      ) AS E
-                      LEFT JOIN Production AS P ON E.CompanyId = P.CompanyId
-                      AND E.MinQuality = P.QualityControl
-                  ) AS F
-                  LEFT JOIN Medicine AS M ON F.MedicineId = M.MedicineId
-              ) AS G
-              LEFT JOIN (
-                SELECT
-                  CompanyId,
-                  MAX(QualityControl) AS MaxQuality
-                FROM
-                  Production AS MaxQ
-                GROUP BY
-                  CompanyId
-              ) AS H ON G.CompanyId = H.CompanyId
-          ) AS I
-          LEFT JOIN Production AS J ON I.CompanyId = J.CompanyId
-          AND I.MaxQuality = J.QualityControl
-      ) AS K
-      LEFT JOIN Medicine AS L ON K.MaxQMedId = L.MedicineId
-  ) AS M
-  LEFT JOIN Company AS N ON M.CompanyId = N.CompanyId
-
-
-
--- 5) Дать списки сделавших заказы аптек по всем дилерам компании “Гедеон Рихтер”. 
--- Если у дилера нет заказов, в названии аптеки проставить NULL.
-SELECT
-  Production.ProductionId,
-  Drugstore.Name AS 'Drugstore',
-  Dealer.Surname AS 'Dealer surname',
-  Company.Name
-FROM Production
-LEFT JOIN [Order]
-  ON Production.ProductionId = [Order].ProductionId
-LEFT JOIN Drugstore
-  ON [Order].DrugstoreId = Drugstore.DrugstoreId
-LEFT JOIN Dealer
-  ON Production.DealerId = Dealer.DealerId
-LEFT JOIN Company
-  ON Production.CompanyId = Company.CompanyId
-WHERE Company.Name LIKE '%Годеон Рихтер%'
-
--- 6) Уменьшить на 20% стоимость всех лекарств, 
--- если она превышает 3000, а длительность лечения не более 7 дней.
-SELECT 
-  Medicine.MedicineId,
-  Medicine.Name,
-  Production.Price AS 'Old price',
-  (CAST((Production.Price * 0.8) AS money)) AS 'Discount price'
-FROM Production
-INNER JOIN Medicine
-  ON Production.MedicineId = Medicine.MedicineId
-WHERE (Production.Price > 3000) AND (Medicine.DurationOfTreatment <= 7)
-
-
-UPDATE Production
-SET ListPrice = ListPrice * 2
-FROM Production.Product AS p
-INNER JOIN Purchasing.ProductVendor AS pv
-    ON p.ProductID = pv.ProductID AND BusinessEntityID = 1540;
-GO
-
-
----
-
-UPDATE Production
-SET Price = Price * 0.8
-FROM 
-(
-SELECT
-*
-FROM
-(
-SELECT 
-  Medicine.MedicineId,
-  (CAST((Production.Price * 0.8) AS money)) AS 'DiscountPrice',
-  Production.Price AS 'OldPrice'
-FROM Production
-INNER JOIN Medicine
-ON Production.MedicineId = Medicine.MedicineId
-WHERE (Production.Price > 3000) AND (Medicine.DurationOfTreatment <= 7)
-) AS A
-INNER JOIN A
-ON A.OldPrice = Production.Price AND A.MedicineId = Production.MedicineId
-
-
-UPDATE Production.Product
-SET ListPrice = ListPrice * 2
-FROM 
-Production.Product AS p
-INNER JOIN 
-
-Purchasing.ProductVendor AS pv
-ON p.ProductID = pv.ProductID AND BusinessEntityID = 1540;
-
+          Production AS P
+          INNER JOIN Medicine AS M ON P.MedicineId = M.MedicineId
+        WHERE
+          (P.Price > 3000)
+          AND (M.DurationOfTreatment <= 7)
+      ) AS A
+      INNER JOIN Production AS PP ON A.Price = PP.Price
+      AND A.MedicineId = PP.MedicineId
+  )
