@@ -28,33 +28,16 @@ GROUP BY P.CompanyId, C.Name
 HAVING COUNT(*) > 10
 
 -- 5) Дать списки сделавших заказы аптек по всем дилерам компании “Годеон Рихтер”. Если у дилера нет заказов, в названии аптеки проставить NULL.
-SELECT PP.DealerId, O.DrugstoreId, D.Name FROM 
-(SELECT P.ProductionId, P.DealerId FROM Production AS P WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Годеон Рихтер%')) AS PP
-LEFT JOIN Orders AS O ON PP.productionId = O.ProductionId
-INNER JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
-GROUP BY PP.DealerId, O.DrugstoreId, D.Name
+SELECT P.DealerId, D.Name
+FROM Production AS P 
+LEFT JOIN Orders AS O ON P.ProductionId = O.ProductionId 
+LEFT JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
+WHERE P.CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Годеон Рихтер%')
+GROUP BY P.DealerId, O.DrugstoreId, D.Name
 
 -- 6) Уменьшить на 20% стоимость всех лекарств, если она превышает 3000, а длительность лечения не более 7 дней.
-UPDATE
-  Production
-SET
-  Price = Price * 0.8
-WHERE
-  ProductionId IN (
-    SELECT
-      PP.ProductionId
-    FROM
-      (
-        SELECT
-          M.MedicineId,
-          P.Price
-        FROM
-          Production AS P
-          INNER JOIN Medicine AS M ON P.MedicineId = M.MedicineId
-        WHERE
-          (P.Price > 3000)
-          AND (M.DurationOfTreatment <= 7)
-      ) AS A
-      INNER JOIN Production AS PP ON A.Price = PP.Price
-      AND A.MedicineId = PP.MedicineId
-  )
+UPDATE Production SET Price = Price * 0.8 
+WHERE ProductionId IN (
+  SELECT P.ProductionId FROM Production AS P
+  INNER JOIN Medicine AS M ON P.MedicineId = M.MedicineId
+  WHERE (P.Price > 3000) AND (M.DurationOfTreatment <= 7))
