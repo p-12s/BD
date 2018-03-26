@@ -1,39 +1,32 @@
-
 /*
-Имя индекса» = «Префикс индекса» + «_» + наименование таблицы + «_» + перечисление имен полей таблицы, участвующих в построении индекса, 
-разделенных символом “-”.
+УНИКАЛЬНЫЙ ИНДЕКС
+	Нельзя создать уникальный индекс для одного столбца, если в более чем одной строке этого столбца содержится значение NULL. 
+	Нельзя также создать уникальный индекс для нескольких столбцов, 
+	если в более чем одной строке такой комбинации столбцов содержится значение NULL. 
+	При индексировании такие значения будут рассматриваться как дубликаты.
 
 «Префик индекса» может принимать одно из следующих значений:
-IN = обычный индекс;
-IU = уникальный индекс.
+IX = обычный индекс;
+UX = уникальный (кластерный) индекс.
 
-CREATE UNIQUE INDEX IU_user_email ON user(email)
+Наилучшим образом будет применение кластеризованного индекса 
+на столбцах с уникальными значениями и не позволяющими использовать NULL.
 
-Для кластеризованных индексов старайтесь использовать настолько короткие поля насколько это возможно. 
-Наилучшим образом будет применение кластеризованного индекса на столбцах с уникальными значениями и не позволяющими использовать NULL.
-
-// в таблице не может быть 2 кластеризованных индекса
-CREATE UNIQUE CLUSTERED INDEX ix_oriderid_lineid
-ON dbo.Sales(OrderID, LineID); 
-
-Создайте некластеризованный индекс на столбцах которые часто используются в ваших запросах 
-в качестве условий поиска в WHERE и соединения в JOIN
-
-CREATE CLUSTERED INDEX IX_TestTable_TestCol1 ON dbo.TestTable (TestCol1); 
-IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = N'IX_ProductVendor_VendorID')
-    DROP INDEX IX_ProductVendor_VendorID ON Purchasing.ProductVendor;   
-CREATE NONCLUSTERED INDEX IX_ProductVendor_VendorID ON Purchasing.ProductVendor (BusinessEntityID); 
-
-УНИКАЛЬНЫЙ ИНДЕКС
-Нельзя создать уникальный индекс для одного столбца, если в более чем одной строке этого столбца содержится значение NULL. 
-Нельзя также создать уникальный индекс для нескольких столбцов, 
-если в более чем одной строке такой комбинации столбцов содержится значение NULL. 
-При индексировании такие значения будут рассматриваться как дубликаты.
-
+В таблице не может быть 2 кластеризованных индекса
 */
 
-
 -- 2) Выдать информацию по всем заказам лекарства “Кордерон” компании “Аргус” с указанием названий аптек, дат, объема заказов.
+
+-- ============== result: 0.020
+
+SELECT D.Name, O.OrderDate, O.QuantityMedicineInOrder FROM Orders AS O
+LEFT JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
+WHERE O.ProductionId = 
+(
+	SELECT P.ProductionId FROM Production AS P 
+	WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name = 'Аргус') 
+		AND MedicineId = (SELECT M.MedicineId FROM Medicine AS M WHERE M.Name = 'Кордерон')
+)
 SELECT D.Name, O.OrderDate, O.QuantityMedicineInOrder FROM Orders AS O
 LEFT JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
 WHERE O.ProductionId = 
@@ -43,23 +36,42 @@ WHERE O.ProductionId =
 		AND MedicineId = (SELECT M.MedicineId FROM Medicine AS M WHERE M.Name = 'Кордерон')
 )
 -- add unique index for Company(Name)
-IF EXISTS (SELECT name from sys.indexes WHERE name = N'AK_Company_Name')
-	DROP INDEX AK_Company_Name ON Company
-	CREATE UNIQUE INDEX AK_Company_Name ON Company (Name)
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'UI_Company_Name')
+	DROP INDEX UI_Company_Name ON Company
+	CREATE UNIQUE INDEX UI_Company_Name ON Company (Name)
 GO
 -- add unique index for Medicine(Name)
-IF EXISTS (SELECT name from sys.indexes WHERE name = N'AK_Medicine_Name')
-	DROP INDEX AK_Medicine_Name ON Medicine
-	CREATE UNIQUE INDEX AK_Medicine_Name ON Medicine (Name)
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'UI_Medicine_Name')
+	DROP INDEX UI_Medicine_Name ON Medicine
+	CREATE UNIQUE INDEX UI_Medicine_Name ON Medicine (Name)
+GO
+-- Order DrugstoreId, ProductionId
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Orders_DrugstoreId')
+	DROP INDEX IX_Orders_DrugstoreId ON Orders
+	CREATE INDEX IX_Orders_DrugstoreId ON Orders (DrugstoreId)
+GO
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Orders_ProductionId')
+	DROP INDEX IX_Orders_ProductionId ON Orders
+	CREATE INDEX IX_Orders_ProductionId ON Orders (ProductionId)
+GO
+-- Production CompanyId, MedicineId, 
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'XI_Production_CompanyId-MedicineId')
+	DROP INDEX [XI_Production_CompanyId-MedicineId] ON Production
+	CREATE INDEX [XI_Production_CompanyId-MedicineId] ON Production (CompanyId, MedicineId)
 GO
 
+--========================================================================================
 -- 3) Дать список лекарств компании “Фарма”, на которые не были сделаны заказы до 1.05.12.
-SELECT P.MedicineId, M.Name, (O.OrderDate) AS MinDate 
-FROM Production AS P 
-LEFT JOIN Orders AS O ON P.ProductionId = O.OrderId 
-LEFT JOIN Medicine AS M ON P.MedicineId = M.MedicineId
-WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name = 'Фарма') AND (O.OrderDate > '2012-05-01')
-GROUP BY P.MedicineId, O.OrderDate, M.Name
+SELECT M.Name FROM Medicine AS M WHERE M.MedicineId IN (
+SELECT P.MedicineId AS MinDate FROM Orders AS O
+JOIN Production AS P ON P.ProductionId = O.ProductionId
+JOIN Company AS C ON C.CompanyId = P.CompanyId
+WHERE C.CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name = 'Фарма')
+GROUP BY P.MedicineId
+HAVING MIN(OrderDate) > '2012-05-01')
+
+-- ============== simple: 0.0188
+
 -- add unique index for Company(Name)
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'AK_Company_Name')
 	DROP INDEX AK_Company_Name ON Company
