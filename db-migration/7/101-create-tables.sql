@@ -22,7 +22,6 @@ GO
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Category' AND xtype='U')
   CREATE TABLE Category (
     CategoryId int IDENTITY(1, 1) NOT NULL,
-    RoomKindId int NOT NULL,
     Name nvarchar (100) NOT NULL,
     MinimumArea float NOT NULL,
 	CONSTRAINT PK_Category PRIMARY KEY CLUSTERED 
