@@ -15,10 +15,12 @@ WHERE O.ProductionId = (SELECT P.ProductionId FROM Production AS P
 WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Аргус%') AND MedicineId = (SELECT M.MedicineId FROM Medicine AS M WHERE M.Name LIKE '%Кордерон%'))
 
 -- 3) Дать список лекарств компании “Фарма”, на которые не были сделаны заказы до 1.05.12.
-SELECT M.Name FROM Medicine AS M WHERE M.MedicineId IN (
-SELECT P.MedicineId FROM Production AS P 
+SELECT P.MedicineId, M.Name, (O.OrderDate) AS MinDate 
+FROM Production AS P 
 LEFT JOIN Orders AS O ON P.ProductionId = O.OrderId 
-WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Фарма%') AND (O.OrderDate IS NULL OR O.OrderDate > '2012-05-01'))
+LEFT JOIN Medicine AS M ON P.MedicineId = M.MedicineId
+WHERE CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Фарма%') AND (O.OrderDate > '2012-05-01')
+GROUP BY P.MedicineId, O.OrderDate, M.Name
 
 -- 4) Дать минимальный и максимальный баллы по лекарствам каждой фирмы, которая производит не менее 10 препаратов, с указанием названий фирмы и лекарства
 SELECT P.CompanyId, C.Name, MIN(P.QualityControl) AS MinQ, MAX(P.QualityControl) AS MaxQ
