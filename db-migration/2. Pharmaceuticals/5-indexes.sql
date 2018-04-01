@@ -1,13 +1,3 @@
--- get all foreign keys in database
-SELECT f.name AS ForeignKey, 
-   OBJECT_NAME(f.parent_object_id) AS TableName, 
-   COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName, 
-   OBJECT_NAME (f.referenced_object_id) AS ReferenceTableName, 
-   COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferenceColumnName 
-FROM sys.foreign_keys AS f 
-INNER JOIN sys.foreign_key_columns AS fc 
-   ON f.OBJECT_ID = fc.constraint_object_id
-
 -- 2) Выдать информацию по всем заказам лекарства “Кордерон” компании “Аргус” с указанием названий аптек, дат, объема заказов.
 SELECT D.Name, O.OrderDate, O.QuantityMedicineInOrder FROM Orders AS O
 LEFT JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
@@ -147,8 +137,3 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Medicine_MedicineId-Du
 	DROP INDEX [IX_Medicine_MedicineId-DurationOfTreatment] ON Medicine
 	CREATE INDEX [IX_Medicine_MedicineId-DurationOfTreatment] ON Medicine (MedicineId, DurationOfTreatment)
 GO
-
-
-
-
-
