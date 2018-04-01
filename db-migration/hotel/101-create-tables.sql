@@ -4,8 +4,8 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Hotel' AND xtype='U')
   CREATE TABLE Hotel (
     HotelId int IDENTITY(1, 1) NOT NULL,
     Name nvarchar (100) NOT NULL,
-    StarCount int NOT NULL,
-	Address nvarchar (255) NOT NULL,
+    StarsCount int NOT NULL,
+    Address nvarchar (255) NOT NULL,
     CONSTRAINT PK_Hotel PRIMARY KEY CLUSTERED 
     (
       HotelId ASC
@@ -40,10 +40,10 @@ GO
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Room' AND xtype='U')
   CREATE TABLE Room (
     RoomId int IDENTITY(1, 1) NOT NULL,
-	HotelId int NOT NULL,
-	CategoryId int NOT NULL,
-	RoomNumberInHotel int NOT NULL,
-	Price money NOT NULL,
+    HotelId int NOT NULL,
+    CategoryId int NOT NULL,
+    RoomNumberInHotel int NOT NULL,
+    Price money NOT NULL,
     CONSTRAINT PK_Room PRIMARY KEY CLUSTERED 
     (
       RoomId ASC
@@ -77,7 +77,7 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Reservation' AND xtype='U')
   CREATE TABLE Reservation (
     ReservationId int IDENTITY(1, 1) NOT NULL,
     ClientId int NOT NULL,
-	ReservationDate date NOT NULL,
+    ReservationDate date NOT NULL,
     CONSTRAINT PK_Reservation PRIMARY KEY CLUSTERED 
     (
       ReservationId ASC
@@ -90,16 +90,16 @@ GO
 
 -------------- create table ArmorRoom --------------
 -- 6)  Комната в брони: id, id брони, id категории номера, дата заезда, дата выезда.
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ArmorRoom' AND xtype='U')
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='RoomInReservation' AND xtype='U')
   CREATE TABLE ArmorRoom (
-    ArmorRoomId int IDENTITY(1, 1) NOT NULL,
+    RoomInReservationId int IDENTITY(1, 1) NOT NULL,
     ReservationId int NOT NULL,
-	CategoryId int NOT NULL,
-	ArrivalDate date NOT NULL,
-	DepartureDate date NOT NULL,
-    CONSTRAINT PK_ArmorRoom PRIMARY KEY CLUSTERED 
+    CategoryId int NOT NULL,
+    ArrivalDate date NOT NULL,
+    DepartureDate date NOT NULL,
+    CONSTRAINT PK_RoomInReservation PRIMARY KEY CLUSTERED 
     (
-      ArmorRoomId ASC
+      RoomInReservationId ASC
     )
     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
     ON [PRIMARY]
