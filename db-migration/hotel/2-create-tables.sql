@@ -54,6 +54,32 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Room' AND xtype='U')
   ON [PRIMARY]
 GO
 
+IF OBJECT_ID('FK_HotelRoom') IS NULL
+  ALTER TABLE [Room]
+    WITH CHECK
+    ADD CONSTRAINT FK_HotelRoom
+    FOREIGN KEY (HotelId) REFERENCES Hotel(HotelId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Room] 
+    CHECK CONSTRAINT FK_HotelRoom
+  GO
+
+IF OBJECT_ID('FK_CategoryRoom') IS NULL
+  ALTER TABLE [Room]
+    WITH CHECK
+    ADD CONSTRAINT FK_CategoryRoom
+    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Room] 
+    CHECK CONSTRAINT FK_CategoryRoom
+  GO
+
 -------------- create table Client --------------
 -- 4)	Клиенты: client - id клиента, фио, телефон.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Client' AND xtype='U')
@@ -88,10 +114,23 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Reservation' AND xtype='U')
   ON [PRIMARY]
 GO 
 
--------------- create table ArmorRoom --------------
+IF OBJECT_ID('FK_ClientReservation') IS NULL
+  ALTER TABLE [Reservation]
+    WITH CHECK
+    ADD CONSTRAINT FK_ClientReservation
+    FOREIGN KEY (ClientId) REFERENCES Client(ClientId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Reservation] 
+    CHECK CONSTRAINT FK_ClientReservation
+  GO
+
+-------------- create table RoomInReservation --------------
 -- 6)  Комната в брони: id, id брони, id категории номера, дата заезда, дата выезда.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='RoomInReservation' AND xtype='U')
-  CREATE TABLE ArmorRoom (
+  CREATE TABLE RoomInReservation (
     RoomInReservationId int IDENTITY(1, 1) NOT NULL,
     ReservationId int NOT NULL,
     CategoryId int NOT NULL,
@@ -107,15 +146,28 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='RoomInReservation' AND xtype
   ON [PRIMARY]
 GO 
 
-
-IF OBJECT_ID('FK_ProductionOrder') IS NULL
-  ALTER TABLE [Order]
+IF OBJECT_ID('FK_ReservationRoomInReservation') IS NULL
+  ALTER TABLE [RoomInReservation]
     WITH CHECK
-    ADD CONSTRAINT FK_ProductionOrder
-    FOREIGN KEY (ProductionId) REFERENCES Production(ProductionId)
-    ON DELETE CASCADE
+    ADD CONSTRAINT FK_ReservationRoomInReservation
+    FOREIGN KEY (ReservationId) REFERENCES Reservation(ReservationId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
   GO
 
-  ALTER TABLE [Order] 
-    CHECK CONSTRAINT FK_ProductionOrder
-  GO  
+  ALTER TABLE [RoomInReservation] 
+    CHECK CONSTRAINT FK_ReservationRoomInReservation
+  GO
+
+IF OBJECT_ID('FK_CategoryRoomInReservation') IS NULL
+  ALTER TABLE [RoomInReservation]
+    WITH CHECK
+    ADD CONSTRAINT FK_CategoryRoomInReservation
+    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [RoomInReservation] 
+    CHECK CONSTRAINT FK_CategoryRoomInReservation
+  GO
