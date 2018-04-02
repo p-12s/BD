@@ -87,14 +87,18 @@ GROUP BY P.CompanyId, C.Name
 HAVING COUNT(*) > 10
 
 -- from 0.024157 to 0.024157 (0%, because the MIN/MAX doesn’t use indexes, and GROUP BY works after WHERE (which is not here))
-
+-- Production CompanyId, MedicineId, 
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Production_CompanyId')
+	DROP INDEX [IX_Production_CompanyId] ON Production
+	CREATE INDEX [IX_Production_CompanyId] ON Production (CompanyId)
+GO
 --====================
 -- 5) Дать списки сделавших заказы аптек по всем дилерам компании “Годеон Рихтер”. Если у дилера нет заказов, в названии аптеки проставить NULL.
 SELECT P.DealerId, D.Name
 FROM Production AS P 
 LEFT JOIN Orders AS O ON P.ProductionId = O.ProductionId 
 LEFT JOIN Drugstore AS D ON O.DrugstoreId = D.DrugstoreId
-WHERE P.CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE '%Годеон Рихтер%')
+WHERE P.CompanyId = (SELECT C.CompanyId FROM Company AS C WHERE C.Name LIKE 'Годеон Рихтер%')
 GROUP BY P.DealerId, O.DrugstoreId, D.Name
 
 -- from 0.027071 to 0.024157 
@@ -108,9 +112,13 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Orders_ProductionId')
 	CREATE INDEX [IX_Orders_ProductionId] ON Orders (ProductionId)
 GO
 -- Production CompanyId, DealerId
-IF EXISTS (SELECT name from sys.indexes WHERE name = N'XI_Production_CompanyId-DealerId')
-	DROP INDEX [XI_Production_CompanyId-DealerId] ON Production
-	CREATE INDEX [XI_Production_CompanyId-DealerId] ON Production (CompanyId, DealerId)
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'XI_Production_CompanyId')
+	DROP INDEX [XI_Production_CompanyId] ON Production
+	CREATE INDEX [XI_Production_CompanyId] ON Production (CompanyId)
+GO
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'XI_Production_DealerId')
+	DROP INDEX [XI_Production_DealerId] ON Production
+	CREATE INDEX [XI_Production_DealerId] ON Production (DealerId)
 GO
 -- add unique index for Company(Name)
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'UI_Company_Name')
