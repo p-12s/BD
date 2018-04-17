@@ -31,47 +31,21 @@ WHERE '2012-05-25' BETWEEN RiR.ArrivalDate AND RiR.DepartureDate AND H.Name = '�
 GROUP BY C.CategoryId
 
 --5)  Дать список последних проживавших клиентов по всем комнатам гостиницы “Космос”, выехавшим в апреле 2012 с указанием даты выезда.
-
-SELECT * FROM RoomInReservation AS RiR
+SELECT R.RoomId, MAX(DepartureDate) AS DepartureDate
+INTO #TempTable
+FROM RoomInReservation AS RiR
 INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
 INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
-WHERE RiR.DepartureDate BETWEEN '2012-04-01' AND '2012-04-30' AND H.Name = 'Космос'
+WHERE DepartureDate BETWEEN '2012-04-01' AND '2012-04-30' AND H.Name = 'Космос'
+GROUP BY R.RoomId
 
-SELECT RiR.RoomId, MAX(RiR.DepartureDate) AS MaxDepart FROM RoomInReservation AS RiR
-GROUP BY RiR.RoomId
-
--- temporary table id room + max depart
-
-SELECT R.RoomId, RiR.DepartureDate, C.FullName FROM RoomInReservation AS RiR
-INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
-INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
+SELECT T.RoomId, T.DepartureDate, C.FullName FROM #TempTable AS T
+INNER JOIN RoomInReservation AS RiR ON RiR.DepartureDate = T.DepartureDate AND RiR.RoomId = T.RoomId
 INNER JOIN Reservation AS Res ON Res.ReservationId = RiR.ReservationId
 INNER JOIN Client AS C ON C.ClientId = Res.ClientId
-WHERE RiR.DepartureDate BETWEEN '2012-04-01' AND '2012-04-30' AND H.Name = 'Космос'
---GROUP BY R.RoomId, MinDeparture, C.FullName
+ORDER BY C.FullName
 
-
-
--- проверка на существование
-IF NOT EXISTS (SELECT Name FROM tempdb.sys.tables WHERE Name LIKE '#temp_table%')
-  PRINT 'temporary table created'
-ELSE
-  PRINT 'table already exists'
-  --DROP TABLE #temp_table
-  --PRINT 'dropped'
-GO
-
--- здесь не получается создать, ругается на AS
-IF NOT EXISTS (SELECT Name FROM tempdb.sys.tables)
-  CREATE TABLE #temp_table2 AS 
-  (
-    SELECT RoomId, MAX(DepartureDate) AS DepartureDate FROM RoomInReservation
-    WHERE DepartureDate BETWEEN '2012-04-01' AND '2012-04-30'
-    GROUP BY RoomId
-  )
-GO
-
-
+-- DROP TABLE #TempTable
  
 --6)  Продлить до 30.05.12 дату проживания в гостинице “Сокол” всем клиентам комнат категории “люкс”, которые заселились 15.05.12, а выезжают 28.05.12
 
@@ -88,24 +62,24 @@ WHERE RiR.ArrivalDate = '2012-05-15' AND RiR.DepartureDate = '2012-05-28' AND H.
 --7)  Привести пример транзакции при создании брони.
 
 BEGIN TRANSACTION
+  DECLARE @clientName varchar(60) = 'Антонов Антон Антонович'
+  DECLARE @reservationDate datetime = '2012-05-01'
+  DECLARE @clientId int = (SELECT ClientId FROM Client WHERE FullName = @clientName)
 
-    UPDATE RoomInReservation
-    SET RoomInReservation.DepartureDate = '2012-05-30'
-    FROM RoomInReservation AS RiR
-    INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
-    INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
-    INNER JOIN Category AS C ON R.CategoryId = C.CategoryId
-    WHERE RiR.ArrivalDate = '2012-05-15' AND RiR.DepartureDate = '2012-05-28' AND H.Name = 'Сокол' AND C.Name = 'Люкс (Lux)'
+  DECLARE @hotelName varchar(60) = 'Сокол'
+  DECLARE @categoryName varchar(60) = 'Стандарт'
+  DECLARE @arrivalDate datetime = '2012-05-03'
+  DECLARE @departureDate datetime = '2012-05-04'
 
+  DECLARE @roomId int = (
+  SELECT TOP 1 RoomId FROM Room
+  INNER JOIN Hotel AS H ON H.Name = @hotelName
+  INNER JOIN Category AS C ON C.Name = @categoryName)
+
+  INSERT INTO Reservation (ClientId, ReservationDate) VALUES (@clientId, @reservationDate)
+
+  DECLARE @reservationId int = (SELECT SCOPE_IDENTITY())
+
+  INSERT INTO RoomInReservation (ReservationId, RoomId, ArrivalDate, DepartureDate)
+  VALUES (@reservationId, @roomId, @arrivalDate, @departureDate)
 COMMIT TRANSACTION
-
-
-SELECT * FROM RoomInReservation AS RiR
-INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
-INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
-INNER JOIN Category AS C ON R.CategoryId = C.CategoryId
-WHERE RiR.ArrivalDate = '2012-05-15' AND RiR.DepartureDate = '2012-05-28' AND H.Name = 'Сокол' AND C.Name = 'Люкс (Lux)'
-
-
-UPDATE RoomInReservation SET DepartureDate = '2012-05-28' WHERE RoomInReservationId = 27
-

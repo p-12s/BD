@@ -1,7 +1,3 @@
-
-
-
-
 -------------- create table Subject --------------
 -- 1) Предметы: id предмета, название, количество учебных часов.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Subject' AND xtype='U')
@@ -21,7 +17,6 @@ GO
 
 -------------- create table Teacher --------------
 -- 2) Преподаватели: id преподавателя, фамилия, должность.
-
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Teacher' AND xtype='U')
   CREATE TABLE Teacher (
     TeacherId int IDENTITY(1, 1) NOT NULL,
@@ -40,7 +35,6 @@ GO
 
 -------------- create table Class --------------
 -- 3)	Группы: id группы, краткое название группы (ПС-21),  id старосты, Spec - краткое название специальности (ПС, ВМ, ИВТ).
-
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
   CREATE TABLE Class (
     ClassId int IDENTITY(1, 1) NOT NULL, 
@@ -57,32 +51,19 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
   ON [PRIMARY]
 GO
 
-IF OBJECT_ID('FK_HotelRoom') IS NULL
-  ALTER TABLE [Room]
+IF OBJECT_ID('FK_ClassStudent') IS NULL
+  ALTER TABLE [Class]
     WITH CHECK
-    ADD CONSTRAINT FK_HotelRoom
-    FOREIGN KEY (HotelId) REFERENCES Hotel(HotelId)
+    ADD CONSTRAINT FK_ClassStudent
+    FOREIGN KEY (PraepostorId) REFERENCES Student(StudentId)
     ON DELETE NO ACTION
     ON UPDATE CASCADE
   GO
 
-  ALTER TABLE [Room] 
-    CHECK CONSTRAINT FK_HotelRoom
+  ALTER TABLE [Class] 
+    CHECK CONSTRAINT FK_ClassStudent
   GO
-
-IF OBJECT_ID('FK_CategoryRoom') IS NULL
-  ALTER TABLE [Room]
-    WITH CHECK
-    ADD CONSTRAINT FK_CategoryRoom
-    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId)
-    ON DELETE NO ACTION
-    ON UPDATE CASCADE
-  GO
-
-  ALTER TABLE [Room] 
-    CHECK CONSTRAINT FK_CategoryRoom
-  GO
-
+              
 -------------- create table Student --------------
 -- 4)	Студенты: id студента, фамилия, id группы, год рождения.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Student' AND xtype='U')
