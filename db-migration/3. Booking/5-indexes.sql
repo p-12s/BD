@@ -90,8 +90,8 @@ INNER JOIN Client AS Cl ON Res.ClientId = Cl.ClientId
 WHERE '2012-05-25' BETWEEN RiR.ArrivalDate AND RiR.DepartureDate AND H.Name = 'Восток'
 GROUP BY C.CategoryId
 
--- from 0.0361164 to 0. (0%)
-+-- make separately index - a little bit faster
+-- from 0.0366261 to 0.0317572 (~15%)
++-- make separately index - a little bit faster. why? scan whatever!
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_ArrivalDate')
 	DROP INDEX [IX_RoomInReservation_ArrivalDate] ON RoomInReservation
 	CREATE INDEX [IX_RoomInReservation_ArrivalDate] ON RoomInReservation (ArrivalDate)
@@ -100,15 +100,112 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_Depa
 	DROP INDEX [IX_RoomInReservation_DepartureDate] ON RoomInReservation
 	CREATE INDEX [IX_RoomInReservation_DepartureDate] ON RoomInReservation (DepartureDate)
 GO
+-- make Name in Hotel as index - made it worse
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Hotel_Name')
+	DROP INDEX [IX_Hotel_Name] ON Hotel
+	CREATE INDEX [IX_Hotel_Name] ON Hotel (Name)
+GO
++--- make separately index - a little bit faster
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Room_CategoryId')
+	DROP INDEX [IX_Room_CategoryId] ON Room
+	CREATE INDEX [IX_Room_CategoryId] ON Room (CategoryId)
+GO
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Room_HotelId')
+	DROP INDEX [IX_Room_HotelId] ON Room
+	CREATE INDEX [IX_Room_HotelId] ON Room (HotelId)
+GO
 
--- make Name in Hotel as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_RoomId')
+	DROP INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation
+	CREATE INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation (RoomId)
+GO
+
+--====================
+--5)  Дать список последних проживавших клиентов по всем комнатам гостиницы “Космос”, выехавшим в апреле 2012 с указанием даты выезда.
+SELECT R.RoomId, MAX(DepartureDate) AS DepartureDate
+INTO #TempTable
+FROM RoomInReservation AS RiR
+INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
+INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
+WHERE DepartureDate BETWEEN '2012-04-01' AND '2012-04-30' AND H.Name = 'Космос'
+GROUP BY R.RoomId
+
+SELECT T.RoomId, T.DepartureDate, C.FullName FROM #TempTable AS T
+INNER JOIN RoomInReservation AS RiR ON RiR.DepartureDate = T.DepartureDate AND RiR.RoomId = T.RoomId
+INNER JOIN Reservation AS Res ON Res.ReservationId = RiR.ReservationId
+INNER JOIN Client AS C ON C.ClientId = Res.ClientId
+ORDER BY C.FullName
+
+-- DROP TABLE #TempTable
+
+-- from 0.0388278 to 0.0 (~%)
+-- make Name in Hotel as index - made it worse
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Hotel_Name')
+	DROP INDEX [IX_Hotel_Name] ON Hotel
+	CREATE INDEX [IX_Hotel_Name] ON Hotel (Name)
+GO
+-- make HotelId in Room as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Room_HotelId')
+	DROP INDEX [IX_Room_HotelId] ON Room
+	CREATE INDEX [IX_Room_HotelId] ON Room (HotelId)
+GO
+-- make RoomId in RoomInReservation as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_RoomId')
+	DROP INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation
+	CREATE INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation (RoomId)
+GO
+
+-- make HotelId in Room as index (add in #TempTable) - don't work
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_TempTable_DepartureDate')
+	DROP INDEX [IX_TempTable_DepartureDate] ON #TempTable
+	CREATE INDEX [IX_TempTable_DepartureDate] ON #TempTable (DepartureDate)
+GO
+-- make HotelId in Room as index (add in #TempTable) - don't work
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_TempTable_RoomId')
+	DROP INDEX [IX_TempTable_RoomId] ON #TempTable
+	CREATE INDEX [IX_TempTable_RoomId] ON #TempTable (RoomId)
+GO
+
+-- доделать
+
+--====================
+--6)  Продлить до 30.05.12 дату проживания в гостинице “Сокол” всем клиентам комнат категории “люкс”, которые заселились 15.05.12, а выезжают 28.05.12
+
+UPDATE RoomInReservation
+SET RoomInReservation.DepartureDate = '2012-05-30'
+-- SELECT *
+FROM RoomInReservation AS RiR
+INNER JOIN Room AS R ON R.RoomId = RiR.RoomId
+INNER JOIN Hotel AS H ON H.HotelId = R.HotelId
+INNER JOIN Category AS C ON R.CategoryId = C.CategoryId
+WHERE RiR.ArrivalDate = '2012-05-15' AND RiR.DepartureDate = '2012-05-28' AND H.Name = 'Сокол' AND C.Name = 'Люкс (Lux)'
+-- from 0.0138033 to 0.0 (~%)
+
+-- make separately index - a little bit faster. why? scan whatever!
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_ArrivalDate')
+	DROP INDEX [IX_RoomInReservation_ArrivalDate] ON RoomInReservation
+	CREATE INDEX [IX_RoomInReservation_ArrivalDate] ON RoomInReservation (ArrivalDate)
+GO
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_DepartureDate')
+	DROP INDEX [IX_RoomInReservation_DepartureDate] ON RoomInReservation
+	CREATE INDEX [IX_RoomInReservation_DepartureDate] ON RoomInReservation (DepartureDate)
+GO
+-- make Name in Category table as unique index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'UI_Category_Name')
+	DROP INDEX UI_Category_Name ON Category
+	CREATE UNIQUE INDEX UI_Category_Name ON Category (Name)
+GO
+-- make Name in Hotel table as index
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Hotel_Name')
 	DROP INDEX [IX_Hotel_Name] ON Hotel
 	CREATE INDEX [IX_Hotel_Name] ON Hotel (Name)
 GO
 
---- доделать
-
+-- make RoomId in Hotel table as index. don't work
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_RoomInReservation_RoomId')
+	DROP INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation
+	-- CREATE INDEX [IX_RoomInReservation_RoomId] ON RoomInReservation (RoomId)
+GO
 
 --====================
 --7)  Привести пример транзакции при создании брони.
