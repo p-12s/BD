@@ -22,8 +22,7 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Teacher' AND xtype='U')
     TeacherId int IDENTITY(1, 1) NOT NULL,
     Surname nvarchar (100) NOT NULL,
     Position nvarchar (100) NOT NULL,
-    MinimumArea float NOT NULL,
-	CONSTRAINT PK_Category PRIMARY KEY CLUSTERED 
+	CONSTRAINT PK_Teacher PRIMARY KEY CLUSTERED 
     (
       TeacherId ASC
     )
@@ -33,37 +32,6 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Teacher' AND xtype='U')
   ON [PRIMARY]
 GO
 
--------------- create table Class --------------
--- 3)	Группы: id группы, краткое название группы (ПС-21),  id старосты, Spec - краткое название специальности (ПС, ВМ, ИВТ).
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
-  CREATE TABLE Class (
-    ClassId int IDENTITY(1, 1) NOT NULL, 
-    Abbreviation nvarchar (20) NOT NULL,
-    PraepostorId int NOT NULL,
-    Spec nvarchar (10) NOT NULL,
-    CONSTRAINT PK_Class PRIMARY KEY CLUSTERED 
-    (
-      ClassId ASC
-    )
-    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
-    ON [PRIMARY]
-  ) 
-  ON [PRIMARY]
-GO
-
-IF OBJECT_ID('FK_ClassStudent') IS NULL
-  ALTER TABLE [Class]
-    WITH CHECK
-    ADD CONSTRAINT FK_ClassStudent
-    FOREIGN KEY (PraepostorId) REFERENCES Student(StudentId)
-    ON DELETE NO ACTION
-    ON UPDATE CASCADE
-  GO
-
-  ALTER TABLE [Class] 
-    CHECK CONSTRAINT FK_ClassStudent
-  GO
-              
 -------------- create table Student --------------
 -- 4)	Студенты: id студента, фамилия, id группы, год рождения.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Student' AND xtype='U')
@@ -81,6 +49,49 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Student' AND xtype='U')
   ) 
   ON [PRIMARY]
 GO 
+-------------- create table Class --------------
+-- 3)	Группы: id группы, краткое название группы (ПС-21),  id старосты, Spec - краткое название специальности (ПС, ВМ, ИВТ).
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
+  CREATE TABLE Class (
+    ClassId int IDENTITY(1, 1) NOT NULL, 
+    Abbreviation nvarchar (20) NOT NULL,
+    PraepostorId int NOT NULL,
+    Spec nvarchar (10) NOT NULL,
+    CONSTRAINT PK_Class PRIMARY KEY CLUSTERED 
+    (
+      ClassId ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
+    ON [PRIMARY]
+  ) 
+  ON [PRIMARY]
+GO
+--------------
+IF OBJECT_ID('FK_ClassStudent') IS NULL
+  ALTER TABLE [Class]
+    WITH CHECK
+    ADD CONSTRAINT FK_ClassStudent
+    FOREIGN KEY (PraepostorId) REFERENCES Student(StudentId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Class] 
+    CHECK CONSTRAINT FK_ClassStudent
+  GO
+--------------  ЦИКЛ!
+IF OBJECT_ID('FK_StudentClass') IS NULL
+  ALTER TABLE [Student]
+    WITH CHECK
+    ADD CONSTRAINT FK_StudentClass
+    FOREIGN KEY (ClassId) REFERENCES [Class](ClassId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Student] 
+    CHECK CONSTRAINT FK_StudentClass
+  GO
 
 -------------- create table Job --------------
 --5) Занятия: id занятия, id преподавателя, id предмета, id группы, дата. 
@@ -100,24 +111,50 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Job' AND xtype='U')
   ) 
   ON [PRIMARY]
 GO 
-
-IF OBJECT_ID('FK_ClientReservation') IS NULL
-  ALTER TABLE [Reservation]
+--------------
+IF OBJECT_ID('FK_JobTeacher') IS NULL
+  ALTER TABLE [Job]
     WITH CHECK
-    ADD CONSTRAINT FK_ClientReservation
-    FOREIGN KEY (ClientId) REFERENCES Client(ClientId)
+    ADD CONSTRAINT FK_JobTeacher
+    FOREIGN KEY (TeacherId) REFERENCES Teacher(TeacherId)
     ON DELETE NO ACTION
     ON UPDATE CASCADE
   GO
 
-  ALTER TABLE [Reservation] 
-    CHECK CONSTRAINT FK_ClientReservation
+  ALTER TABLE [Job] 
+    CHECK CONSTRAINT FK_JobTeacher
+  GO
+--------------
+IF OBJECT_ID('FK_JobSubject') IS NULL
+  ALTER TABLE [Job]
+    WITH CHECK
+    ADD CONSTRAINT FK_JobSubject
+    FOREIGN KEY (SubjectId) REFERENCES Subject(SubjectId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Job] 
+    CHECK CONSTRAINT FK_JobSubject
+  GO
+--------------
+IF OBJECT_ID('FK_JobClass') IS NULL
+  ALTER TABLE [Job]
+    WITH CHECK
+    ADD CONSTRAINT FK_JobClass
+    FOREIGN KEY (ClassId) REFERENCES Class(ClassId)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE
+  GO
+
+  ALTER TABLE [Job] 
+    CHECK CONSTRAINT FK_JobClass
   GO
 
 -------------- create table Rating --------------
 -- 6)  Оценки: id оценки, номер студента, номер занятия, оценка.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Rating' AND xtype='U')
-  CREATE TABLE RoomInReservRatingation (
+  CREATE TABLE Rating (
     RatingId int IDENTITY(1, 1) NOT NULL,
     StudentId int NOT NULL,
     JobId int NOT NULL,    
@@ -131,29 +168,33 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Rating' AND xtype='U')
   ) 
   ON [PRIMARY]
 GO 
-
-IF OBJECT_ID('FK_ReservationRoomInReservation') IS NULL
-  ALTER TABLE [RoomInReservation]
+--------------
+IF OBJECT_ID('FK_RatingStudent') IS NULL
+  ALTER TABLE [Rating]
     WITH CHECK
-    ADD CONSTRAINT FK_ReservationRoomInReservation
-    FOREIGN KEY (ReservationId) REFERENCES Reservation(ReservationId)
+    ADD CONSTRAINT FK_RatingStudent
+    FOREIGN KEY (StudentId) REFERENCES Student(StudentId)
     ON DELETE NO ACTION
     ON UPDATE CASCADE
   GO
 
-  ALTER TABLE [RoomInReservation] 
-    CHECK CONSTRAINT FK_ReservationRoomInReservation
+  ALTER TABLE [Rating] 
+    CHECK CONSTRAINT FK_RatingStudent
   GO
-
-IF OBJECT_ID('FK_CategoryRoomInReservation') IS NULL
-  ALTER TABLE [RoomInReservation]
+--------------
+IF OBJECT_ID('FK_RatingJob') IS NULL
+  ALTER TABLE [Rating]
     WITH CHECK
-    ADD CONSTRAINT FK_CategoryRoomInReservation
-    FOREIGN KEY (CategoryId) REFERENCES Category(CategoryId)
+    ADD CONSTRAINT FK_RatingJob
+    FOREIGN KEY (JobId) REFERENCES Job(JobId)
     ON DELETE NO ACTION
     ON UPDATE CASCADE
   GO
 
-  ALTER TABLE [RoomInReservation] 
-    CHECK CONSTRAINT FK_CategoryRoomInReservation
+  ALTER TABLE [Rating] 
+    CHECK CONSTRAINT FK_RatingJob
   GO
+  
+  
+  
+  
