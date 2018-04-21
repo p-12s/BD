@@ -14,7 +14,6 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Subject' AND xtype='U')
   )
   ON [PRIMARY]
 GO
-
 -------------- create table Teacher --------------
 -- 2) Преподаватели: id преподавателя, фамилия, должность.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Teacher' AND xtype='U')
@@ -31,7 +30,22 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Teacher' AND xtype='U')
   ) 
   ON [PRIMARY]
 GO
-
+-------------- create table Class --------------
+-- 3)	Группы: id группы, краткое название группы (ПС-21),  id старосты, Spec - краткое название специальности (ПС, ВМ, ИВТ).
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
+  CREATE TABLE [Class] (
+    ClassId int IDENTITY(1, 1) NOT NULL, 
+    Abbreviation nvarchar (20) NOT NULL,
+    Spec nvarchar (10) NOT NULL,
+    CONSTRAINT PK_Class PRIMARY KEY CLUSTERED 
+    (
+      ClassId ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
+    ON [PRIMARY]
+  ) 
+  ON [PRIMARY]
+GO
 -------------- create table Student --------------
 -- 4)	Студенты: id студента, фамилия, id группы, год рождения.
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Student' AND xtype='U')
@@ -49,37 +63,7 @@ IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Student' AND xtype='U')
   ) 
   ON [PRIMARY]
 GO 
--------------- create table Class --------------
--- 3)	Группы: id группы, краткое название группы (ПС-21),  id старосты, Spec - краткое название специальности (ПС, ВМ, ИВТ).
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Class' AND xtype='U')
-  CREATE TABLE Class (
-    ClassId int IDENTITY(1, 1) NOT NULL, 
-    Abbreviation nvarchar (20) NOT NULL,
-    PraepostorId int NOT NULL,
-    Spec nvarchar (10) NOT NULL,
-    CONSTRAINT PK_Class PRIMARY KEY CLUSTERED 
-    (
-      ClassId ASC
-    )
-    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
-    ON [PRIMARY]
-  ) 
-  ON [PRIMARY]
-GO
 --------------
-IF OBJECT_ID('FK_ClassStudent') IS NULL
-  ALTER TABLE [Class]
-    WITH CHECK
-    ADD CONSTRAINT FK_ClassStudent
-    FOREIGN KEY (PraepostorId) REFERENCES Student(StudentId)
-    ON DELETE NO ACTION
-    ON UPDATE CASCADE
-  GO
-
-  ALTER TABLE [Class] 
-    CHECK CONSTRAINT FK_ClassStudent
-  GO
---------------  ЦИКЛ!
 IF OBJECT_ID('FK_StudentClass') IS NULL
   ALTER TABLE [Student]
     WITH CHECK
@@ -91,6 +75,48 @@ IF OBJECT_ID('FK_StudentClass') IS NULL
 
   ALTER TABLE [Student] 
     CHECK CONSTRAINT FK_StudentClass
+  GO
+-------------- create table ClassPraepostor --------------
+-- 4)	Старосты классов: id старосты класса, id студента, id группы
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ClassPraepostor' AND xtype='U')
+  CREATE TABLE ClassPraepostor (
+    ClassPraepostorId int IDENTITY(1, 1) NOT NULL,
+    StudentId int NOT NULL,
+    ClassId int NOT NULL,
+    CONSTRAINT PK_ClassPraepostor PRIMARY KEY CLUSTERED 
+    (
+      ClassPraepostorId ASC
+    )
+    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) 
+    ON [PRIMARY]
+  ) 
+  ON [PRIMARY]
+GO 
+--------------
+IF OBJECT_ID('FK_ClassPraepostorStudent') IS NULL
+  ALTER TABLE [ClassPraepostor]
+    WITH CHECK
+    ADD CONSTRAINT FK_ClassPraepostorStudent
+    FOREIGN KEY (StudentId) REFERENCES Student(StudentId)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+  GO
+
+  ALTER TABLE [ClassPraepostor] 
+    CHECK CONSTRAINT FK_ClassPraepostorStudent
+  GO
+--------------
+IF OBJECT_ID('FK_ClassPraepostorClass') IS NULL
+  ALTER TABLE [ClassPraepostor]
+    WITH CHECK
+    ADD CONSTRAINT FK_ClassPraepostorClass
+    FOREIGN KEY (ClassId) REFERENCES [Class](ClassId)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION
+  GO
+
+  ALTER TABLE [ClassPraepostor] 
+    CHECK CONSTRAINT FK_ClassPraepostorStudent
   GO
 
 -------------- create table Job --------------
@@ -142,7 +168,7 @@ IF OBJECT_ID('FK_JobClass') IS NULL
   ALTER TABLE [Job]
     WITH CHECK
     ADD CONSTRAINT FK_JobClass
-    FOREIGN KEY (ClassId) REFERENCES Class(ClassId)
+    FOREIGN KEY (ClassId) REFERENCES [Class](ClassId)
     ON DELETE NO ACTION
     ON UPDATE CASCADE
   GO
