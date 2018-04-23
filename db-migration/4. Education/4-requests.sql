@@ -30,7 +30,9 @@ EXEC Get_debtors_of_group 'БИ-11';
 
 -- 4)	Дать среднюю оценку студентов по каждому предмету для тех предметов, по которым занимается не менее 10 студентов.
 
-
+SELECT J.SubjectId FROM Job AS J
+GROUP BY J.SubjectId
+HAVING COUNT(J.JobId) >= 10
 
 
 
