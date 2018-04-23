@@ -59,5 +59,3 @@ SET Rating.Rating = Rating + 1
   INNER JOIN Class AS C ON C.ClassId = J.ClassId
   INNER JOIN Subject AS Sub ON Sub.SubjectId = J.SubjectId
   WHERE J.JobDate < '2018-12-05' AND R.Rating < 5 AND C.Spec = 'ИВТ' AND Sub.Name = 'БД'
-
-
