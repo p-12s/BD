@@ -159,7 +159,7 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IU_Subject_Name')
 	DROP INDEX [IU_Subject_Name] ON Subject
 	CREATE INDEX [IU_Subject_Name] ON Subject (Name)
 GO
---- make JobId in Rating table as index - don't work!
+--- make JobId in Rating table as index
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_JobId')
 	DROP INDEX [IX_Rating_JobId] ON Rating
 	CREATE INDEX [IX_Rating_JobId] ON Rating (JobId)
@@ -169,7 +169,7 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_SubjectId')
 	DROP INDEX [IX_Job_SubjectId] ON Job
 	CREATE INDEX [IX_Job_SubjectId] ON Job (SubjectId)
 GO
---- make ClassId in Job table as index - don't work!
+--- make ClassId in Job table as index
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_ClassId')
 	DROP INDEX [IX_Job_ClassId] ON Job
 	CREATE INDEX [IX_Job_ClassId] ON Job (ClassId)
