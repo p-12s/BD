@@ -88,15 +88,89 @@ WHERE J.SubjectId IN (
   HAVING COUNT(J.JobId) >= 10
 )
 GROUP BY J.SubjectId, Sub.Name
+-- from 0.0348088 to 0.0174659 (~50%)
+--- make StudentId in Rating table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_StudentId')
+	DROP INDEX [IX_Rating_StudentId] ON Rating
+	CREATE INDEX [IX_Rating_StudentId] ON Rating (StudentId)
+GO
+--- make JobId in Rating table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_JobId')
+	DROP INDEX [IX_Rating_JobId] ON Rating
+	CREATE INDEX [IX_Rating_JobId] ON Rating (JobId)
+GO
+--- make SubjectId in Rating table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_SubjectId')
+	DROP INDEX [IX_Job_SubjectId] ON Job
+	CREATE INDEX [IX_Job_SubjectId] ON Job (SubjectId)
+GO
 
--- from 0.0348088 to 0.0 (~%)
+--====================
+-- 5)	Дать оценки студентов специальности ВМ по всем проводимым предметам с указанием группы, фамилии, предмета, даты. 
+--		При отсутствии оценки заполнить значениями NULL поля оценки и даты.
+SELECT C.Spec, C.Abbreviation, S.Surname, Sub.Name, J.JobDate, R.Rating FROM Student AS S
+INNER JOIN Class AS C ON C.ClassId = S.ClassId
+INNER JOIN Job AS J ON J.ClassId = C.ClassId
+LEFT JOIN Rating AS R ON R.JobId = J.JobId
+INNER JOIN Subject AS Sub ON Sub.SubjectId = J.SubjectId
+WHERE C.Spec = 'ВМ'
+ORDER BY C.Abbreviation, S.Surname
+
+-- from 0.0971071 to 0.09031 (~6%)
 --- make ClassId in Student table as index
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Student_ClassId')
 	DROP INDEX [IX_Student_ClassId] ON Student
 	CREATE INDEX [IX_Student_ClassId] ON Student (ClassId)
 GO
+--- make SubjectId in Job table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_SubjectId')
+	DROP INDEX [IX_Job_SubjectId] ON Job
+	CREATE INDEX [IX_Job_SubjectId] ON Job (SubjectId)
+GO
+--- make ClassId in Job table as index - don't work!
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_ClassId')
+	DROP INDEX [IX_Job_ClassId] ON Job
+	--CREATE INDEX [IX_Job_ClassId] ON Job (ClassId)
+GO
+--- make JobId in Rating table as index - don't work!
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_JobId')
+	DROP INDEX [IX_Rating_JobId] ON Rating
+	--CREATE INDEX [IX_Rating_JobId] ON Rating (JobId)
+GO
 
+--====================
+-- 6)	Всем студентам специальности ИВТ, получившим оценки меньшие 5 по предмету БД до 12.05, повысить эти оценки на 1 балл.
+UPDATE Rating
+SET Rating.Rating = Rating + 1
+  FROM Rating AS R
+  INNER JOIN Job AS J ON J.JobId = R.JobId
+  INNER JOIN Class AS C ON C.ClassId = J.ClassId
+  INNER JOIN Subject AS Sub ON Sub.SubjectId = J.SubjectId
+  WHERE J.JobDate < '2018-12-05' AND R.Rating < 5 AND C.Spec = 'ИВТ' AND Sub.Name = 'БД'
 
-
-
-
+-- from 0.0457374 to 0.0207444 (~60%)
+--- make unicue index on Spec in Class - result none
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IU_Class_Spec')
+	DROP INDEX [IU_Class_Spec] ON Class
+	CREATE INDEX [IU_Class_Spec] ON Class (Spec)
+GO
+--- make unicue index on Name in Subject - result none
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IU_Subject_Name')
+	DROP INDEX [IU_Subject_Name] ON Subject
+	CREATE INDEX [IU_Subject_Name] ON Subject (Name)
+GO
+--- make JobId in Rating table as index - don't work!
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_JobId')
+	DROP INDEX [IX_Rating_JobId] ON Rating
+	CREATE INDEX [IX_Rating_JobId] ON Rating (JobId)
+GO
+--- make SubjectId in Job table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_SubjectId')
+	DROP INDEX [IX_Job_SubjectId] ON Job
+	CREATE INDEX [IX_Job_SubjectId] ON Job (SubjectId)
+GO
+--- make ClassId in Job table as index - don't work!
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_ClassId')
+	DROP INDEX [IX_Job_ClassId] ON Job
+	CREATE INDEX [IX_Job_ClassId] ON Job (ClassId)
+GO
