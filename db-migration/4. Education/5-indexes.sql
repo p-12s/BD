@@ -1,4 +1,3 @@
-
 --====================
 -- 2)	Выдать оценки студентов по математике если они обучаются/обучались данному предмету. Оформить выдачу данных с использованием view.
 IF OBJECT_ID ('mathematic_ratings', 'V') IS NOT NULL
@@ -15,7 +14,7 @@ GO
 SELECT * FROM mathematic_ratings
 
 -- from 0.0457064 to 0.0218674 (~50%)
---- make StudentId in Rating table as index
+--- make StudentId, JobId in Rating table as index
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Rating_JobId-StudentId')
 	DROP INDEX [IX_Rating_JobId-StudentId] ON Rating
 	CREATE INDEX [IX_Rating_JobId-StudentId] ON Rating (JobId, StudentId)
@@ -24,6 +23,11 @@ GO
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Job_SubjectId')
 	DROP INDEX [IX_Job_SubjectId] ON Job
 	CREATE INDEX [IX_Job_SubjectId] ON Job (SubjectId)
+GO
+--- make Name in Subject table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Subject_Name')
+	DROP INDEX [IX_Subject_Name] ON Subject
+	CREATE INDEX [IX_Subject_Name] ON Subject (Name)
 GO
 
 --====================
@@ -75,7 +79,11 @@ IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Class_Abbreviation')
 	DROP INDEX [IX_Class_Abbreviation] ON Class
 	CREATE INDEX [IX_Class_Abbreviation] ON Class (Abbreviation)
 GO
-
+--- make Surname in Student table as index
+IF EXISTS (SELECT name from sys.indexes WHERE name = N'IX_Student_Surname')
+	DROP INDEX [IX_Student_Surname] ON Student
+	CREATE INDEX [IX_Student_Surname] ON Student (Surname)
+GO
 --====================
 -- 4)	Дать среднюю оценку студентов по каждому предмету для тех предметов, по которым занимается не менее 10 студентов.
 SELECT AVG(R.Rating) AS AvgRating, J.SubjectId, Sub.Name FROM Rating AS R
@@ -149,12 +157,12 @@ SET Rating.Rating = Rating + 1
   WHERE J.JobDate < '2018-12-05' AND R.Rating < 5 AND C.Spec = 'ИВТ' AND Sub.Name = 'БД'
 
 -- from 0.0457374 to 0.0207444 (~60%)
---- make unicue index on Spec in Class - result none
+--- make index on Spec in Class - result none
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IU_Class_Spec')
 	DROP INDEX [IU_Class_Spec] ON Class
 	CREATE INDEX [IU_Class_Spec] ON Class (Spec)
 GO
---- make unicue index on Name in Subject - result none
+--- make index on Name in Subject - result none
 IF EXISTS (SELECT name from sys.indexes WHERE name = N'IU_Subject_Name')
 	DROP INDEX [IU_Subject_Name] ON Subject
 	CREATE INDEX [IU_Subject_Name] ON Subject (Name)
